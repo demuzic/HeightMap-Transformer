@@ -1,5 +1,5 @@
 # HeightMap-Transformer
-The HMT has the function of generating terrains and 3d reliefs. Full Open Source, made with RayLib
+The HMT has the function of generating terrains and 3d reliefs. Full Open Source, made with RayLib (still in development)
 
 
 installation--- 
