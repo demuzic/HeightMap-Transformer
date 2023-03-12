@@ -5,11 +5,15 @@
 #include <raymath.h>
 #include <string>
 #include "GLOBAL.h"
+#include <direct.h>
+
 //VARIABLES
     //system
+
+
 int user_gizmo = 1;
 int quick_move = 1;
-int editor_gizmo = 1;
+int editor_gizmo = 0;
 
 //fuctional
 int KeyDown = 0;
@@ -25,13 +29,16 @@ Texture2D texture;
 Mesh mesh;
 Model model;
 Vector3 mapPosition = { -8.0f, 0.0f, -8.0f };
+Rectangle EditorArea;
+Vector2 EditorAreaDistance = { 50,20 };
 int editor()
 {
 
 
 
 
-
+    
+    
     float EditorSize = 25;
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_MSAA_4X_HINT);
@@ -51,6 +58,10 @@ int editor()
 
     while (!WindowShouldClose())
     {
+       
+        EditorArea = {EditorAreaDistance.x,EditorAreaDistance.y,GetScreenWidth()- EditorAreaDistance.x , GetScreenHeight()- EditorAreaDistance.y }; //Editor Area
+        EditorAreaDistance.x = GetScreenWidth() * 0.15;
+        EditorAreaDistance.y = 40;
 
         UpdateCamera(&camera); // CAMERA NAV
         SetCameraMode(camera, 1);
@@ -75,8 +86,7 @@ int editor()
 
 
         //DrawHM
-        DrawModel(model, mapPosition, 1.0f, RED);
-
+        DrawModel(model, mapPosition, 1, GREEN);
         if (IsFileDropped())
         {
             FilePathList droppedFiles = LoadDroppedFiles();
@@ -119,7 +129,9 @@ int editor()
         //UI
         if (user_gizmo == 1)
         {
-
+            int overXZ = 0;
+            int overYZ = 0;
+            int overYX = 0;
             Vector3 a = { camera.position.x - camera.target.x,camera.position.y - camera.target.y,camera.position.z - camera.target.z };
             float b = sqrt(pow(a.x, 2) + pow(a.y, 2));
             float c = sqrt(pow(b, 2) + pow(a.z, 2));
@@ -129,7 +141,8 @@ int editor()
             Vector2 YendPos = GetWorldToScreen(Vector3{ camera.target.x ,camera.target.y + c / 30,camera.target.z }, camera);
             Vector2 ZendPos = GetWorldToScreen(Vector3{ camera.target.x ,camera.target.y,camera.target.z + c / 30 }, camera);
 
-            Vector2 offset = { GetScreenWidth() / 2 - 50,-GetScreenHeight() / 2 + 50 };
+            Vector2 offset = { GetScreenWidth() / 2 - 50,-GetScreenHeight() / 2 + 90 };
+            Color colArea = { 50,50,50,175 };
 
             Vector2 nstPos = Vector2{ stPos.x + offset.x,stPos.y + offset.y };
             Vector2 nXendPos = Vector2{ XendPos.x + offset.x,XendPos.y + offset.y };
@@ -139,23 +152,57 @@ int editor()
             Vector2 XZendPos = GetWorldToScreen(Vector3{ camera.target.x + c / 30 ,camera.target.y,camera.target.z + c / 30 }, camera);
             Vector2 nXZendPos = Vector2{ XZendPos.x + offset.x, XZendPos.y + offset.y };
 
+            //YX
             for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
-                DrawLineEx(Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3, Color{ 100,100,150,20 });
-
-                if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 2) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
                 {
-                    KeyDown = 1;
-
+                    overYX = 1;
                 }
             }
             for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
-                DrawLineEx(Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3, Color{ 150,100,100,20 });
+                if (overYX)
+                {
+                    DrawLineEx(Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3, colArea);
+                }
+            }
+
+            //YZ   
+            for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                    overYZ = 1;
+                }
+               
+            }         
+            for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                
+                if (overYZ)
+                {
+                    DrawLineEx(Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3, colArea);
+                }
+            }
+            
+            //XZ
+            for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                float PROP = i / Vector2Distance(nXendPos, nstPos);
+                Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+                
+                if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                {
+                    overXZ = 1;
+                  }
+               
             }
             for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
                 float PROP = i / Vector2Distance(nXendPos, nstPos);
                 Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
-                DrawLineEx(fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3, Color{ 100,150,100,20 });
+                if (overXZ == 1)
+                {
+                    DrawLineEx(fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3, colArea);
+                }
+                
             }
+
+            //LINE
             DrawLineEx(Vector2{ stPos.x + offset.x,stPos.y + offset.y }, Vector2{ XendPos.x + offset.x,XendPos.y + offset.y }, 3, RED);
             DrawLineEx(Vector2{ stPos.x + offset.x,stPos.y + offset.y }, Vector2{ YendPos.x + offset.x,YendPos.y + offset.y }, 3, GREEN);
             DrawLineEx(Vector2{ stPos.x + offset.x,stPos.y + offset.y }, Vector2{ ZendPos.x + offset.x,ZendPos.y + offset.y }, 3, BLUE);
@@ -245,10 +292,13 @@ int editor()
 
         }
 
+        
 
+        //TOOLBAR
+        Rectangle ToolbarArea = { 0,0,EditorArea.x,GetScreenHeight() };
+        DrawRectangleRec(ToolbarArea, GRAY);
 
-
-
+        
         EndDrawing();
     }
     CloseWindow();
