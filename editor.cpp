@@ -1,3 +1,6 @@
+#define RAYGUI_IMPLEMENTATION
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "raylib.h"
 #include <stdlib.h>
 #include <cstdio>
@@ -6,10 +9,11 @@
 #include <string>
 #include "GLOBAL.h"
 #include <direct.h>
+#include "raygui.h"
+
 
 //VARIABLES
-    //system
-
+//system
 
 int user_gizmo = 1;
 int quick_move = 1;
@@ -34,11 +38,6 @@ Vector2 EditorAreaDistance = { 50,20 };
 int editor()
 {
 
-
-
-
-    
-    
     float EditorSize = 25;
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_MSAA_4X_HINT);
@@ -84,9 +83,9 @@ int editor()
 
 
 
-
+        
         //DrawHM
-        DrawModel(model, mapPosition, 1, GREEN);
+        DrawModel(model, mapPosition, 1, WHITE);
         if (IsFileDropped())
         {
             FilePathList droppedFiles = LoadDroppedFiles();
@@ -97,11 +96,7 @@ int editor()
                     IsFileExtension(droppedFiles.paths[0], ".jpeg") ||
                     IsFileExtension(droppedFiles.paths[0], ".jpg"))
                 {
-                    //UnloadModel(model);
-                    //UnloadMesh(mesh);
-                   //UnloadImage(image);
-                   //UnloadTexture(texture);
-                    std::cout << droppedFiles.paths[0] << std::endl;
+                    
                     image = LoadImage(droppedFiles.paths[0]);
                     texture = LoadTextureFromImage(image);
                     mesh = GenMeshHeightmap(image, Vector3{ l1Mesh,hMesh,l2Mesh });
@@ -151,61 +146,419 @@ int editor()
 
             Vector2 XZendPos = GetWorldToScreen(Vector3{ camera.target.x + c / 30 ,camera.target.y,camera.target.z + c / 30 }, camera);
             Vector2 nXZendPos = Vector2{ XZendPos.x + offset.x, XZendPos.y + offset.y };
+            int overarea = 0;
+            int gizmopos = 0;
+            //COLLISION
+            if (nZendPos.y < nstPos.y && nXendPos.y > nstPos.y && nstPos.x < nZendPos.x && nstPos.x < nXendPos.x) {
+                gizmopos = 1;
+                //YZ   
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
 
-            //YX
-            for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
-                if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                }
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+
+                
+
+                
+
+            }
+            if (nXendPos.y < nstPos.y && nZendPos.y > nstPos.y && nstPos.x > nZendPos.x && nstPos.x > nXendPos.x) {
+                gizmopos = 2;
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+                //YZ   
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
+
+                }
+
+                
+
+            }
+            if (nXendPos.y > nstPos.y && nZendPos.y > nstPos.y && nstPos.x < nZendPos.x && nstPos.x > nXendPos.x) {
+                gizmopos = 3;
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+                //YZ   
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
+
+                }
+
+
+
+            }
+            if (nXendPos.y < nstPos.y && nZendPos.y < nstPos.y && nstPos.x > nZendPos.x && nstPos.x < nXendPos.x) {
+                gizmopos = 4;
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+                //YZ   
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
+
+                }
+
+
+
+            }
+            if (nXendPos.y > nstPos.y && nZendPos.y > nstPos.y && nstPos.x > nZendPos.x && nstPos.x < nXendPos.x) {
+                gizmopos = 5;
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+                //YZ   
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
+
+                }
+
+
+
+            }
+            if (nXendPos.y > nstPos.y && nZendPos.y < nstPos.y && nstPos.x > nZendPos.x && nstPos.x > nXendPos.x) {
+                gizmopos = 6;
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+                //YZ   
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
+
+                }
+
+
+
+            }
+            if (nXendPos.y < nstPos.y && nZendPos.y < nstPos.y && nstPos.x < nZendPos.x && nstPos.x > nXendPos.x) {
+                gizmopos = 7;
+                //YZ
+                    for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                        if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                            overYZ = 1;
+                            if (overarea == 0)
+                            {
+                                overarea = 2;
+                            }
+                        }
+
+                    }
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+
+            }
+            if (nXendPos.y < nstPos.y && nZendPos.y > nstPos.y && nstPos.x < nZendPos.x && nstPos.x < nXendPos.x) {
+                gizmopos = 8;
+                //YZ
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
+                        overYZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 2;
+                        }
+                    }
+
+                }
+                //YX
+                for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
+                    if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3))
+                    {
+                        overYX = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 1;
+                        }
+                    }
+                }
+                //XZ
+                for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
+                    float PROP = i / Vector2Distance(nXendPos, nstPos);
+                    Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
+
+                    if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
+                    {
+                        overXZ = 1;
+                        if (overarea == 0)
+                        {
+                            overarea = 3;
+                        }
+                    }
+
+                }
+
+            }
+            //CHANGE CAMERA
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            {
+                if (overarea == 1)
                 {
-                    overYX = 1;
+                    if (gizmopos == 2 || gizmopos == 4 || gizmopos == 5 || gizmopos == 8 ) {
+                        KeyDown = 1;
+                    }
+                    if (gizmopos == 1 || gizmopos == 3 || gizmopos == 6 || gizmopos == 7) {
+                        KeyDown = 2;
+                    }
+                }
+                if (overarea == 2)
+                {
+                    if (gizmopos == 2 || gizmopos == 3 || gizmopos == 7 || gizmopos == 8) {
+                        KeyDown = 6;
+                    }
+                    if (gizmopos == 1 || gizmopos == 4 || gizmopos == 5 || gizmopos == 6) {
+                        KeyDown = 5;
+                    }
+                }
+                if (overarea == 3)
+                {
+                    if (gizmopos == 7 || gizmopos == 6 || gizmopos == 5 || gizmopos == 8) {
+                        KeyDown = 3;
+
+                    }
+                    if (gizmopos == 1 || gizmopos == 2 || gizmopos == 4 || gizmopos == 3) {
+                        KeyDown = 4;
+
+                    }
                 }
             }
+            
+            
+            //DRAW
+            //YX
             for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
-                if (overYX)
+                if (overYX && overarea == 1)
                 {
                     DrawLineEx(Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nXendPos.x, nXendPos.y - i }, 3, colArea);
                 }
             }
+            //YZ
+            for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
 
-            //YZ   
-            for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
-                if (CheckCollisionPointLine(GetMousePosition(), Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3)) {
-                    overYZ = 1;
-                }
-               
-            }         
-            for (int i = 0; i < Vector2Distance(nstPos, nYendPos); i++) {
-                
-                if (overYZ)
+                if (overYZ && overarea == 2)
                 {
                     DrawLineEx(Vector2{ nstPos.x, nstPos.y - i }, Vector2{ nZendPos.x, nZendPos.y - i }, 3, colArea);
                 }
             }
-            
             //XZ
             for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
                 float PROP = i / Vector2Distance(nXendPos, nstPos);
                 Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
-                
-                if (CheckCollisionPointLine(GetMousePosition(), fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3))
-                {
-                    overXZ = 1;
-                  }
-               
-            }
-            for (float i = 0; i < Vector2Distance(nXendPos, nstPos); i++) {
-                float PROP = i / Vector2Distance(nXendPos, nstPos);
-                Vector2 fPoint = { nXendPos.x - (nXendPos.x - nstPos.x) * PROP,nXendPos.y - (nXendPos.y - nstPos.y) * PROP };
-                if (overXZ == 1)
+                if (overXZ == 1 && overarea == 3)
                 {
                     DrawLineEx(fPoint, Vector2{ fPoint.x - (nXendPos.x - nXZendPos.x)  , fPoint.y - (nXendPos.y - nXZendPos.y) }, 3, colArea);
                 }
-                
-            }
 
+            }
+            
             //LINE
             DrawLineEx(Vector2{ stPos.x + offset.x,stPos.y + offset.y }, Vector2{ XendPos.x + offset.x,XendPos.y + offset.y }, 3, RED);
             DrawLineEx(Vector2{ stPos.x + offset.x,stPos.y + offset.y }, Vector2{ YendPos.x + offset.x,YendPos.y + offset.y }, 3, GREEN);
             DrawLineEx(Vector2{ stPos.x + offset.x,stPos.y + offset.y }, Vector2{ ZendPos.x + offset.x,ZendPos.y + offset.y }, 3, BLUE);
+            std::cout << overarea << std::endl;
         }
 
         if (quick_move == 1)
@@ -297,6 +650,7 @@ int editor()
         //TOOLBAR
         Rectangle ToolbarArea = { 0,0,EditorArea.x,GetScreenHeight() };
         DrawRectangleRec(ToolbarArea, GRAY);
+        
 
         
         EndDrawing();
