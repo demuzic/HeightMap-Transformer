@@ -11,7 +11,6 @@
 #include <direct.h>
 #include "raygui.h"
 
-
 //VARIABLES
 //system
 
